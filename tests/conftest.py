@@ -33,3 +33,20 @@ def app(test_database_url, monkeypatch):
         db.session.commit()
 
     yield home.app
+
+        # Optionally, clean after the whole session
+    with home.app.app_context():
+        from home import db
+        db.session.execute(text("DELETE FROM locations"))
+        db.session.commit()
+
+@pytest.fixture()
+def client(app):
+    return app.test_client()
+
+@pytest.fixture()
+def db_session(app):
+    from home import db
+    with app.app_context():
+        yield db.session
+        db.session.rollback()
