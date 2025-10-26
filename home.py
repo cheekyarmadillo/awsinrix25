@@ -12,6 +12,7 @@ def load_html(path: str) -> str:
 
 
 HOME_HTML = load_html("home.html")
+REPORT_HTML = load_html("report.html")
 
 # Configuration
 # Allow overriding via environment for deployment; fall back to the provided EC2/Postgres URL
@@ -44,8 +45,7 @@ def home():
 
 @app.route("/report")
 def report():
-    with open("report.html", "r", encoding="utf-8") as file:
-        return render_template_string(file.read())
+    return render_template_string(REPORT_HTML)
 
 
 def _parse_point_wkt(wkt: str):
