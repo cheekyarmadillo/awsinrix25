@@ -11,6 +11,7 @@ app = Flask(__name__, static_folder="static") #starts the app
 @app.route("/process", methods=["POST"])
 def get_js_data():
     data = request.get_json()
+    print(data.get("imageName"));
     
     return jsonify(result=data)
 

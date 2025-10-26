@@ -309,37 +309,17 @@
         imageName: document.getElementById('photo').files[0]?.name || null
       };
 
-        const loadImage = (path) => {
-            const image = new Image();
-            image.src = path;
-
-            return image;
-        };
-
-        const sendToFlask = (data) => {
-            console.log(data);
-            $.ajax({
-                url: "/process",
-                type: "POST",
-                contentType: "application/json",
-                data: JSON.stringify({ "data": data }),
-                success: function(response) {
-                    console.log(response);
-                },
-                error: console.log,
-            });
-        };
-
-
       try {
-            await fetch('/process', {
+            const response = await fetch('/process', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
-          alert(JSON.stringify(payload));
-        window.location.href = '/'; // back to home
+          const result = await response.json();
+          console.log(result);
+
+          window.location.href = '/'; // back to home
       } catch (err) {
         alert('Failed to submit (demo). Check console.');
         console.error(err);
