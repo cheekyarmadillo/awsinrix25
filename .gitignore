@@ -4,3 +4,5 @@ __pycache__/
 tests/__pycache__/
 standard_env/
 venv/
+stankey.pem
+

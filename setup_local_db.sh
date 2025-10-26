@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 set -e
 
 CONTAINER_NAME="maphole-test"
@@ -13,21 +13,29 @@ echo "🚀 Spinning up local Postgres + PostGIS test DB..."
 # --- Step 1: Ensure Docker is running ---
 if ! docker info > /dev/null 2>&1; then
   echo "🐋 Docker is not running. Attempting to start it..."
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS — open Docker Desktop
-    open -a Docker
-    echo "⏳ Waiting for Docker Desktop to start..."
-    until docker info > /dev/null 2>&1; do
-      sleep 2
-    done
-  else
-    # Linux — try system service
-    sudo systemctl start docker || true
-    echo "⏳ Waiting for Docker daemon..."
-    until docker info > /dev/null 2>&1; do
-      sleep 2
-    done
-  fi
+  
+  case "$(uname -s)" in
+    Darwin)
+      # macOS — open Docker Desktop
+      open -a Docker
+      echo "⏳ Waiting for Docker Desktop to start..."
+      until docker info > /dev/null 2>&1; do
+        sleep 2
+      done
+      ;;
+    Linux)
+      # Linux — try system service
+      sudo systemctl start docker || true
+      echo "⏳ Waiting for Docker daemon..."
+      until docker info > /dev/null 2>&1; do
+        sleep 2
+      done
+      ;;
+    *)
+      echo "❌ Unsupported OS: $(uname -s)"
+      exit 1
+      ;;
+  esac
 fi
 
 # --- Step 2: Create or reuse container ---
@@ -41,13 +49,13 @@ else
     -e POSTGRES_USER="${DB_USER}" \
     -e POSTGRES_PASSWORD="${DB_PASS}" \
     -e POSTGRES_DB="${DB_NAME}" \
-    -p ${DB_PORT}:5432 \
+    -p "${DB_PORT}":5432 \
     "${IMAGE}"
 fi
 
 # --- Step 3: Wait for Postgres to accept connections ---
 echo "⏳ Waiting for Postgres to be ready..."
-until docker exec -it "${CONTAINER_NAME}" pg_isready -U "${DB_USER}" > /dev/null 2>&1; do
+until docker exec "${CONTAINER_NAME}" pg_isready -U "${DB_USER}" > /dev/null 2>&1; do
   sleep 1
 done
 echo "✅ Postgres is ready!"
@@ -80,4 +88,3 @@ To stop it:
 To remove it:
   docker rm -f ${CONTAINER_NAME}
 EOF
-
