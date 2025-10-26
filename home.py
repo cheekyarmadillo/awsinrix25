@@ -1,5 +1,11 @@
 from flask import Flask, render_template_string, request, jsonify
 
+def load_html(path: str) -> str:
+    with open(path) as file:
+        return file.read()
+
+HOME_HTML = load_html("home.html")
+
 app = Flask(__name__, static_folder="static") #starts the app
 
 @app.route("/process", methods=["POST"])
@@ -10,8 +16,7 @@ def get_js_data():
 
 @app.route("/")
 def home():
-    with open("home.html", "r") as file:
-        return render_template_string(file.read())
+    return render_template_string(HOME_HTML)
 
 @app.route("/report")
 def report():
