@@ -42,3 +42,34 @@ def test_list_locations_contains_created_point(client):
     r2 = client.post("/model", json=p2)
     assert r1.status_code == 201
     assert r2.status_code == 201
+
+    # List
+    r = client.get("/model")
+    assert r.status_code == 200
+    rows = r.get_json()
+    assert isinstance(rows, list)
+    # Ensure at least the last two are present somewhere in the list
+    lats = [row["lat"] for row in rows]
+    lons = [row["lon"] for row in rows]
+    assert any(approx_eq(lat, p1["lat"]) for lat in lats)
+    assert any(approx_eq(lon, p1["lon"]) for lon in lons)
+    assert any(approx_eq(lat, p2["lat"]) for lat in lats)
+    assert any(approx_eq(lon, p2["lon"]) for lon in lons)
+
+def test_parse_point_wkt_helper_import(client):
+    """
+    Validate the private WKT parser on a couple of edge cases.
+    """
+    import home
+
+    # Good WKT
+    lat, lon = home._parse_point_wkt("POINT(-122.0840575 37.4219999)")
+    assert approx_eq(lat, 37.4219999)
+    assert approx_eq(lon, -122.0840575)
+
+    # Bad WKT shapes
+    lat, lon = home._parse_point_wkt("LINESTRING(0 0, 1 1)")
+    assert lat is None and lon is None
+
+    lat, lon = home._parse_point_wkt("POINT(invalid tokens)")
+    assert lat is None and lon is None
