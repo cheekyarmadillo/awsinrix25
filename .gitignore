@@ -1,7 +1,8 @@
-.env/
+.env
 node_modules/
 .venv/
 uploads/
 __pycache__/
 *.pyc
 stankey.pem
+
