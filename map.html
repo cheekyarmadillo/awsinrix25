@@ -128,6 +128,81 @@
             border-radius: 8px;
             padding: 6px 8px;
         }
+
+        .map-layout {
+            display: flex;
+            gap: 16px;
+            align-items: stretch;
+            height: calc(100vh - 140px);
+        }
+        .sidebar {
+            width: 320px;
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            font-size: 16px;
+            margin: 0 0 10px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        #searchBtn {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 0;
+            background: #2563eb;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #searchMsg {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #4b5563;
+            min-height: 18px;
+        }
+
+        #map {
+            flex: 1;
+            height: 100%;
+            width: auto;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+        }
+
+        /* Stack on small screens */
+        @media (max-width:900px) {
+            .map-layout {
+                flex-direction: column;
+                height: auto;
+            }
+
+            #map {
+                height: 60vh;
+            }
+
+            .sidebar {
+                width: auto;
+            }
+        }
     </style>
 </head>
 
@@ -146,16 +221,29 @@
 
     <main class="wrap">
         <h1>Interactive Map</h1>
-        <div id="map" role="application" aria-label="Heatmap of verified road issues"></div>
+        <div class="map-layout">
+            <aside class="sidebar" aria-label="Location search">
+                <h2>Search Location</h2>
+                <form id="searchForm" class="search-row" autocomplete="off">
+                    <input id="searchInput" type="text" placeholder="City, address, landmark…" />
+                    <button id="searchBtn" type="submit">Search</button>
+                </form>
+                <div id="searchMsg"></div>
+                <p class="hint" style="margin-top:12px">
+                    Enter a place name or address. If found, the map will snap there.
+                </p>
+            </aside>
+
+            <div id="map" role="application" aria-label="Heatmap of verified road issues"></div>
+        </div>
+
         <p class="hint">
             Colors show <b>verified</b> issue density per cell: White (0), Yellow (1), Orange (2–3), Red (4+).
         </p>
     </main>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <!-- Heatmap plugin -->
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 
     <script>
@@ -208,10 +296,10 @@
         });
 
         L.heatLayer(heatPoints, {
-            radius: 48, 
+            radius: 48,
             blur: 32,
             maxZoom: 17,
-            minOpacity: 0.35, 
+            minOpacity: 0.35,
             gradient: {
                 0.0: 'rgba(255,255,255,0)',
                 0.2: '#fff4c2',
@@ -234,6 +322,40 @@
             );
         });
     </script>
+    <script>
+        const form = document.getElementById('searchForm');
+        const input = document.getElementById('searchInput');
+        const msg = document.getElementById('searchMsg');
+
+        async function geocode(q) {
+            msg.textContent = 'Searching…';
+            try {
+                const u = new URL('https://nominatim.openstreetmap.org/search');
+                u.searchParams.set('q', q);
+                u.searchParams.set('format', 'json');
+                u.searchParams.set('limit', '1');
+                const res = await fetch(u, { headers: { 'Accept': 'application/json' } });
+                const data = await res.json();
+                if (!Array.isArray(data) || data.length === 0) {
+                    msg.textContent = 'No results. Try a more specific place.';
+                    return;
+                }
+                const { lat, lon, display_name } = data[0];
+                msg.textContent = display_name;
+                map.flyTo([parseFloat(lat), parseFloat(lon)], 14, { duration: 1.0 });
+            } catch (e) {
+                msg.textContent = 'Search failed. Check your connection.';
+            }
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const q = input.value.trim();
+            if (!q) { msg.textContent = 'Enter a location.'; return; }
+            geocode(q);
+        });
+    </script>
+
 </body>
 
 </html>
