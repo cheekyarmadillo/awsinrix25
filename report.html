@@ -225,10 +225,7 @@
         <input id="loc" name="location" type="text" placeholder="Street & nearest cross, or pin URL" required />
       </div>
 
-      <div class="row">
-        <label for="desc">Description</label>
-        <textarea id="desc" name="description" placeholder="Describe the issue..." required></textarea>
-      </div>
+      <!-- description field removed: model no longer stores free-text descriptions -->
 
       <div class="row">
         <label for="date">Date</label>
@@ -254,8 +251,7 @@
         <dl>
           <dt>Location</dt>
           <dd id="cLoc">—</dd>
-          <dt>Description</dt>
-          <dd id="cDesc">—</dd>
+          <!-- description removed -->
           <dt>Date</dt>
           <dd id="cDate">—</dd>
           <dt>Image</dt>
@@ -272,9 +268,8 @@
   <script>
     const form = document.getElementById('issueForm');
     const backdrop = document.getElementById('confirmBackdrop');
-    const cLoc = document.getElementById('cLoc');
-    const cDesc = document.getElementById('cDesc');
-    const cDate = document.getElementById('cDate');
+  const cLoc = document.getElementById('cLoc');
+  const cDate = document.getElementById('cDate');
     const cImg = document.getElementById('cImg');
 
     form.addEventListener('submit', (e) => {
@@ -282,8 +277,7 @@
       const fd = new FormData(form);
 
       // Fill confirmation
-      cLoc.textContent = fd.get('location') || '—';
-      cDesc.textContent = fd.get('description') || '—';
+  cLoc.textContent = fd.get('location') || '—';
       cDate.textContent = fd.get('date') || '—';
 
       const file = fd.get('image');
@@ -303,7 +297,6 @@
       // For hackathon demo: send JSON without the file (teammates can wire real upload later)
       const payload = {
         location: document.getElementById('loc').value,
-        description: document.getElementById('desc').value,
         date: document.getElementById('date').value,
         imageName: document.getElementById('photo').value
       };
