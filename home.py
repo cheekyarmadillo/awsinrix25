@@ -86,23 +86,26 @@ def health_check():
 
 @app.route("/model", methods=["POST"])
 def create_location():
-    """Create a new Location row. JSON: {name, description, lat, lon}"""
+    """Create a new Location row. JSON: {lat, lon}
+
+    Only geometry (lat/lon) is stored and returned.
+    """
     data = request.get_json() or {}
-    name = data.get("name")
-    description = data.get("description")
     lat = data.get("lat")
     lon = data.get("lon")
-    if not name or lat is None or lon is None:
-        return jsonify(error="missing name/lat/lon"), 400
+    if lat is None or lon is None:
+        return jsonify(error="missing lat/lon"), 400
 
     try:
         geom = WKTElement(f"POINT({lon} {lat})", srid=4326)
-        location = Location(name=name, description=description, geom=geom)
+        # we still keep the columns on the model for compatibility, but we won't set them
+        location = Location(geom=geom)
         with app.app_context():
             db.session.add(location)
             db.session.commit()
             loc_id = location.id
-        return jsonify(id=loc_id, name=name), 201
+            created_at = location.created_at
+        return jsonify(id=loc_id, lat=float(lat), lon=float(lon), created_at=str(created_at)), 201
     except Exception as exc:
         return jsonify(error=str(exc)), 500
 
@@ -112,20 +115,18 @@ def get_location(loc_id: int):
     """Return a single location as JSON."""
     # Use ST_AsText to get the POINT text
     stmt = text(
-        "SELECT id, name, description, created_at, ST_AsText(geom) AS wkt FROM locations WHERE id = :id"
+        "SELECT id, created_at, ST_AsText(geom) AS wkt FROM locations WHERE id = :id"
     )
     result = None
     with app.app_context():
         res = db.session.execute(stmt, {"id": loc_id}).fetchone()
         if not res:
             return jsonify(error="not found"), 404
-        wkt = res["wkt"] if isinstance(res, dict) else res[4]
+        wkt = res["wkt"] if isinstance(res, dict) else res[2]
         lat, lon = _parse_point_wkt(wkt)
         result = {
             "id": res[0] if not isinstance(res, dict) else res.get("id"),
-            "name": res[1] if not isinstance(res, dict) else res.get("name"),
-            "description": res[2] if not isinstance(res, dict) else res.get("description"),
-            "created_at": str(res[3]) if not isinstance(res, dict) else str(res.get("created_at")),
+            "created_at": str(res[1]) if not isinstance(res, dict) else str(res.get("created_at")),
             "lat": lat,
             "lon": lon,
         }
@@ -136,19 +137,17 @@ def get_location(loc_id: int):
 def list_locations():
     """List locations (limit 100)."""
     stmt = text(
-        "SELECT id, name, description, created_at, ST_AsText(geom) AS wkt FROM locations ORDER BY id DESC LIMIT 100"
+        "SELECT id, created_at, ST_AsText(geom) AS wkt FROM locations ORDER BY id DESC LIMIT 100"
     )
     rows = []
     with app.app_context():
         res = db.session.execute(stmt).fetchall()
         for r in res:
-            wkt = r[4]
+            wkt = r[2]
             lat, lon = _parse_point_wkt(wkt)
             rows.append({
                 "id": r[0],
-                "name": r[1],
-                "description": r[2],
-                "created_at": str(r[3]),
+                "created_at": str(r[1]),
                 "lat": lat,
                 "lon": lon,
             })
@@ -156,4 +155,5 @@ def list_locations():
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
+    # bind to configured host/port (defaults set earlier) so this is drop-in for EC2
+    app.run(host=SERVER_HOST, port=SERVER_PORT, debug=False, use_reloader=False)
