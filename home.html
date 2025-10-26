@@ -30,6 +30,7 @@
         color: #e5e7eb;
         position: sticky;
         top: 0;
+	z-index: 1000;
       }
       .brand {
         display: flex;
@@ -47,6 +48,17 @@
       .nav {
         display: flex;
         gap: 22px;
+      }
+      .nav a:link,
+      .nav a:visited {
+        color: #e5e7eb;
+        text-decoration: none;
+      }
+
+      .nav a:hover,
+      .nav a:focus {
+        color: #ffffff;
+        text-decoration: underline;
       }
       .nav button {
         background: transparent;
@@ -111,7 +123,7 @@
         margin-top: 8px;
         filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.25));
       }
-      card .label {
+      .card .label {
         font-size: 18px;
         font-weight: 700;
         margin-top: 10px;
@@ -141,6 +153,54 @@
         .features { grid-template-columns: 1fr; }
         h1 { font-size: 30px; }
       }
+
+      .mapwrap {
+        max-width: 760px;
+        margin: 22px auto 70px;
+        background: var(--surface);
+        padding: 12px;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+      }
+
+      .maplink {
+        position: relative;
+        display: block;
+        border-radius: 10px;
+        overflow: hidden;
+        transition: transform .15s ease, box-shadow .15s ease;
+        text-decoration: none;
+      }
+
+      .maplink img {
+        width: 100%;
+        display: block;
+      }
+
+      .maplink:hover {
+        transform: translateY(-2px) scale(1.01);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .15);
+      }
+
+      .maplink::after {
+        content: "View Interactive Heatmap";
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, .35);
+        color: #fff;
+        font-weight: 700;
+        letter-spacing: .2px;
+        opacity: 0;
+        transition: opacity .15s ease;
+      }
+
+      .maplink:hover::after {
+        opacity: 1;
+      }
+
     </style>
   </head>
   <body>
@@ -149,11 +209,10 @@
         <span class="logo" aria-hidden="true"></span>
         <span>PLACEHOLDER NAME</span>
       </div>
-      <nav class="nav" aria-label="Top navigation (inactive)">
-        <!-- Buttons are inert by design per requirements -->
-        <button type="button">Home</button>
-        <button type="button">Report Issue</button>
-        <button type="button">Interactive Map</button>
+      <nav class="nav" aria-label="Top navigation">
+        <a href="/">Home</a>
+        <a href="/report">Report Issue</a>
+        <a href="#">Interactive Map</a>
       </nav>
     </header>
 
@@ -161,7 +220,7 @@
       <section class="hero">
         <h1>Report and Track Road Issues</h1>
         <p class="sub">Report and verify road issues with AI. View real-time maps of verified damage to help keep roads safe and well-maintained.</p>
-        <button class="cta" type="button">Report Issue</button>
+        <button class="cta" type="button" onclick="window.location.href='/report'">Report Issue</button>
       </section>
 
       <section class="features" aria-label="Feature previews">
@@ -197,11 +256,11 @@
           </div>
         </div>
       </section>
-
-
-      <section class="mapwrap" aria-label="Heatmap preview">
-        <img src="{{ url_for('static', filename='staticHeatMap.jpg') }}" alt="Example heatmap (static image)" />
-      </section>
+        <section class="mapwrap" aria-label="Heatmap preview">
+           <a href="#" class="maplink" aria-label="View Interactive Heatmap (placeholder)">
+              <img src="{{ url_for('static', filename='staticHeatMap.jpg') }}" alt="Heatmap" />
+           </a>
+        </section>
     </main>
     <footer></footer>
   </body>

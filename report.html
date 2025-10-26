@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PLACEHOLDER NAME — Report Issue</title>
+  <style>
+    :root { --bg:#f5f6f8; --surface:#fff; --text:#1f2937; --muted:#4b5563; --brand:#2563eb; --nav:#0f172a; }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
+    /* Top nav (same as home) */
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:var(--nav);color:#e5e7eb;position:sticky;top:0;z-index:1000}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700}
+    .logo{width:20px;height:20px;border-radius:999px;background:#94a3b8;display:inline-block}
+    .nav{display:flex;gap:22px}
+    .nav a{color:#e5e7eb;text-decoration:none;padding:6px 2px}
+    .nav a:hover{text-decoration:underline}
+
+    /* Page */
+    .wrap{max-width:1000px;margin:28px auto;padding:0 16px}
+    h1{font-size:36px;margin:12px 0 22px}
+
+    .card{background:var(--surface);border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);padding:18px}
+    .row{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+    label{font-weight:600}
+    input[type="text"], input[type="date"], textarea, input[type="file"]{
+      width:100%;padding:14px;border:1px solid #d1d5db;border-radius:10px;font-size:16px
+    }
+    textarea{min-height:110px;resize:vertical}
+    .actions{display:flex;gap:12px;justify-content:flex-end}
+    .btn{appearance:none;border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer}
+    .btn-secondary{background:#e5e7eb}
+    .btn-primary{background:var(--brand);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.25)}
+    .btn-primary:active{transform:translateY(1px)}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px}
+    .modal{max-width:640px;width:100%;background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);overflow:hidden}
+    .modal header{padding:16px 18px;font-weight:800;border-bottom:1px solid #e5e7eb}
+    .modal .content{padding:16px 18px}
+    .modal .content dl{display:grid;grid-template-columns:140px 1fr;gap:8px 16px}
+    .modal .content dt{color:var(--muted)}
+    .modal footer{display:flex;gap:10px;justify-content:flex-end;padding:14px 18px;border-top:1px solid #e5e7eb}
+
+    @media (max-width:520px){ h1{font-size:28px} .modal .content dl{grid-template-columns:1fr} .modal .content dt{font-weight:700} }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo" aria-hidden="true"></span><span>PLACEHOLDER NAME</span></div>
+    <nav class="nav" aria-label="Top navigation">
+      <a href="/">Home</a>
+      <a href="/report" aria-current="page">Report Issue</a>
+      <a href="#">Interactive Map</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <h1>Report a Road Issue</h1>
+    <form id="issueForm" class="card" enctype="multipart/form-data">
+      <div class="row">
+        <label for="loc">Location</label>
+        <input id="loc" name="location" type="text" placeholder="Street & nearest cross, or pin URL" required />
+      </div>
+
+      <div class="row">
+        <label for="desc">Description</label>
+        <textarea id="desc" name="description" placeholder="Describe the issue (e.g., pothole size, lane blocked)"></textarea>
+      </div>
+
+      <div class="row">
+        <label for="date">Date</label>
+        <input id="date" name="date" type="date" />
+      </div>
+
+      <div class="row">
+        <label for="photo">Upload Image</label>
+        <input id="photo" name="image" type="file" accept="image/*" />
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" onclick="history.back()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Submit Report</button>
+      </div>
+    </form>
+  </main>
+
+  <div id="confirmBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <header>Confirm Your Report</header>
+      <div class="content">
+        <dl>
+          <dt>Location</dt><dd id="cLoc">—</dd>
+          <dt>Description</dt><dd id="cDesc">—</dd>
+          <dt>Date</dt><dd id="cDate">—</dd>
+          <dt>Image</dt><dd id="cImg">—</dd>
+        </dl>
+      </div>
+      <footer>
+        <button id="goBack" class="btn btn-secondary" type="button">Go Back</button>
+        <button id="confirmSend" class="btn btn-primary" type="button">Confirm & Send</button>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('issueForm');
+    const backdrop = document.getElementById('confirmBackdrop');
+    const cLoc = document.getElementById('cLoc');
+    const cDesc = document.getElementById('cDesc');
+    const cDate = document.getElementById('cDate');
+    const cImg = document.getElementById('cImg');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault(); // stop immediate submit
+      const fd = new FormData(form);
+
+      // Fill confirmation
+      cLoc.textContent = fd.get('location') || '—';
+      cDesc.textContent = fd.get('description') || '—';
+      cDate.textContent = fd.get('date') || '—';
+
+      const file = fd.get('image');
+      cImg.textContent = (file && file.name) ? file.name : 'No file selected';
+
+      // show modal
+      backdrop.style.display = 'flex';
+      backdrop.setAttribute('aria-hidden', 'false');
+    });
+
+    document.getElementById('goBack').addEventListener('click', () => {
+      backdrop.style.display = 'none';
+      backdrop.setAttribute('aria-hidden', 'true');
+    });
+
+    document.getElementById('confirmSend').addEventListener('click', async () => {
+      // For hackathon demo: send JSON without the file (teammates can wire real upload later)
+      const payload = {
+        location: document.getElementById('loc').value,
+        description: document.getElementById('desc').value,
+        date: document.getElementById('date').value,
+        imageName: document.getElementById('photo').files[0]?.name || null
+      };
+
+      try {
+        const res = await fetch('/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        // simple success UX
+        alert('Report submitted! (Demo)\n\n' + JSON.stringify(payload, null, 2));
+        window.location.href = '/'; // back to home
+      } catch (err) {
+        alert('Failed to submit (demo). Check console.');
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
