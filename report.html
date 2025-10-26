@@ -239,7 +239,7 @@
 
       <div class="row">
         <label for="photo">Upload Image</label>
-        <input id="photo" name="image" type="file" accept="image/*" required />
+        <input id="photo" name="image" type="file" accept=".jpg" required />
       </div>
 
       <div class="actions">
@@ -303,10 +303,12 @@
 
     document.getElementById('confirmSend').addEventListener('click', async () => {
       // For hackathon demo: send JSON without the file (teammates can wire real upload later)
+        const file_path = document.getElementById("photo").files[0].name;
+        const path = `images/${file_path}`;
       const payload = {
         location: document.getElementById('loc').value,
         date: document.getElementById('date').value,
-        imageName: document.getElementById('photo').value
+        imageName: path,
       };
 
       try {
@@ -319,8 +321,7 @@
         const result = await response.json();
         console.log(result);
 
-        window.location.href = '/map';
-
+        //window.location.href = '/map';
       } catch (err) {
         alert('Failed to submit (demo). Check console.');
         console.error(err);
