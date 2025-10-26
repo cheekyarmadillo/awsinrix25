@@ -213,7 +213,7 @@
     <nav class="nav" aria-label="Top navigation">
       <a href="/">Home</a>
       <a href="/report" aria-current="page">Report Issue</a>
-      <a href="#">Interactive Map</a>
+      <a href="/map">Interactive Map</a>
     </nav>
   </header>
 
@@ -233,12 +233,17 @@
       </div>
 
       <div class="row">
+        <label for="desc">Description</label>
+        <textarea id="desc" name="description" placeholder="Describe the issue..." required></textarea>
+      </div>
+
+      <div class="row">
         <label for="photo">Upload Image</label>
         <input id="photo" name="image" type="file" accept="image/*" required />
       </div>
 
       <div class="actions">
-        <button type="button" class="btn btn-secondary" onclick="history.back()">Cancel</button>
+        <button type="button" class="btn btn-secondary" onclick="window.location.href='/'">Cancel</button>
         <button type="submit" class="btn btn-primary">Submit Report</button>
       </div>
     </form>
@@ -251,7 +256,8 @@
         <dl>
           <dt>Location</dt>
           <dd id="cLoc">—</dd>
-          <!-- description removed -->
+          <dt>Description</dt>
+          <dd id="cDesc">—</dd>
           <dt>Date</dt>
           <dd id="cDate">—</dd>
           <dt>Image</dt>
@@ -268,8 +274,9 @@
   <script>
     const form = document.getElementById('issueForm');
     const backdrop = document.getElementById('confirmBackdrop');
-  const cLoc = document.getElementById('cLoc');
-  const cDate = document.getElementById('cDate');
+    const cLoc = document.getElementById('cLoc');
+    const cDate = document.getElementById('cDate');
+    const cDesc = document.getElementById('cDesc'); 
     const cImg = document.getElementById('cImg');
 
     form.addEventListener('submit', (e) => {
@@ -277,7 +284,7 @@
       const fd = new FormData(form);
 
       // Fill confirmation
-  cLoc.textContent = fd.get('location') || '—';
+      cLoc.textContent = fd.get('location') || '—';
       cDate.textContent = fd.get('date') || '—';
 
       const file = fd.get('image');
@@ -302,16 +309,17 @@
       };
 
       try {
-            const response = await fetch('/process', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+        const response = await fetch('/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
 
-          const result = await response.json();
-          console.log(result);
+        const result = await response.json();
+        console.log(result);
 
-          window.location.href = '/'; // back to home
+        window.location.href = '/map';
+
       } catch (err) {
         alert('Failed to submit (demo). Check console.');
         console.error(err);
