@@ -1,5 +1,4 @@
-
-from flask import Flask, render_template_string, url_for
+from flask import Flask, render_template_string, request, jsonify
 
 app = Flask(__name__, static_folder="static") #starts the app
 #I like html more
@@ -213,7 +212,13 @@ HTML = """
   </body>
 </html>
 """
-#
+
+@app.route("/process", methods=["POSTS"])
+def get_js_data():
+    data = request.get_json()
+    
+    return jsonify(result=data)
+
 @app.route("/")
 def home():
     return render_template_string(HTML)
