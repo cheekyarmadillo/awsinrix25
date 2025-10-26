@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PLACEHOLDER NAME — Interactive Map</title>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <style>
+        :root {
+            --bg: #f5f6f8;
+            --surface: #fff;
+            --text: #1f2937;
+            --muted: #4b5563;
+            --brand: #2563eb;
+            --nav: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 22px;
+            background: var(--nav);
+            color: #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+        }
+
+        .logo {
+            width: 20px;
+            height: 20px;
+            border-radius: 999px;
+            background: #94a3b8;
+            display: inline-block;
+        }
+
+        .nav {
+            display: flex;
+            gap: 22px;
+        }
+
+        .nav a {
+            color: #e5e7eb;
+            text-decoration: none;
+        }
+
+        .nav a:hover {
+            text-decoration: underline;
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 18px auto;
+            padding: 0 16px;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin: 10px 0 14px;
+        }
+
+        #map {
+            height: 72vh;
+            width: 100%;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+        }
+
+        #map canvas {
+            filter: saturate(0.6) brightness(1.06) contrast(0.95);
+        }
+
+        .legend {
+            background: #fff;
+            padding: 10px 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
+            font-size: 13px;
+            line-height: 1.3;
+        }
+
+        .legend .row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+        }
+
+        .swatch {
+            width: 16px;
+            height: 12px;
+            border-radius: 3px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .hint {
+            margin: 10px 2px 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .cell-tip.leaflet-tooltip {
+            font-weight: 700;
+            border-radius: 8px;
+            padding: 6px 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <span class="logo" aria-hidden="true"></span>
+            <span>PLACEHOLDER NAME</span>
+        </div>
+        <nav class="nav" aria-label="Top navigation">
+            <a href="/">Home</a>
+            <a href="/report">Report Issue</a>
+            <a href="/map" aria-current="page">Interactive Map</a>
+        </nav>
+    </header>
+
+    <main class="wrap">
+        <h1>Interactive Map</h1>
+        <div id="map" role="application" aria-label="Heatmap of verified road issues"></div>
+        <p class="hint">
+            Colors show <b>verified</b> issue density per cell: White (0), Yellow (1), Orange (2–3), Red (4+).
+        </p>
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Heatmap plugin -->
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+    <script>
+        const map = L.map('map', { scrollWheelZoom: true }).setView([37.3496, -121.9381], 12);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap &copy; Carto'
+        }).addTo(map);
+
+        const reports = [
+            { lat: 37.3496, lng: -121.9381, verified: true },
+            { lat: 37.3520, lng: -121.9300, verified: true },
+            { lat: 37.3470, lng: -121.9450, verified: true },
+            { lat: 37.3360, lng: -121.9300, verified: true },
+            { lat: 37.3550, lng: -121.9550, verified: true },
+            { lat: 37.3498, lng: -121.9380, verified: true },
+            { lat: 37.3494, lng: -121.9383, verified: true },
+            { lat: 37.3492, lng: -121.9385, verified: true }
+        ];
+
+        const CELL = 0.005; // ~550m
+        function gridKey(lat, lng) {
+            const rlat = Math.floor(lat / CELL) * CELL;
+            const rlng = Math.floor(lng / CELL) * CELL;
+            return `${rlat.toFixed(5)},${rlng.toFixed(5)}`;
+        }
+        function cellPolyFromKey(key) {
+            const [rlat, rlng] = key.split(',').map(Number);
+            const sw = [rlat, rlng];
+            const se = [rlat, rlng + CELL];
+            const ne = [rlat + CELL, rlng + CELL];
+            const nw = [rlat + CELL, rlng];
+            return [nw, ne, se, sw];
+        }
+
+        const counts = new Map();
+        for (const r of reports) {
+            if (!r.verified) continue;
+            const key = gridKey(r.lat, r.lng);
+            counts.set(key, (counts.get(key) || 0) + 1);
+        }
+        const heatPoints = [];
+        counts.forEach((n, key) => {
+            const [rlat, rlng] = key.split(',').map(Number);
+            const lat = rlat + CELL / 2;
+            const lng = rlng + CELL / 2;
+
+            const intensity = Math.max(0.35, Math.min(1, n / 3));
+            heatPoints.push([lat, lng, intensity]);
+        });
+
+        L.heatLayer(heatPoints, {
+            radius: 48, 
+            blur: 32,
+            maxZoom: 17,
+            minOpacity: 0.35, 
+            gradient: {
+                0.0: 'rgba(255,255,255,0)',
+                0.2: '#fff4c2',
+                0.4: '#fde047',
+                0.6: '#fb923c',
+                0.9: '#ef4444'
+            }
+        }).addTo(map);
+        counts.forEach((n, key) => {
+            const poly = L.polygon(cellPolyFromKey(key), {
+                color: 'transparent',
+                weight: 0,
+                fillOpacity: 0,
+                interactive: true
+            }).addTo(map);
+
+            poly.bindTooltip(
+                `${n} verified issue${n > 1 ? 's' : ''}`,
+                { sticky: true, direction: 'top', opacity: 0.95, className: 'cell-tip' }
+            );
+        });
+    </script>
+</body>
+
+</html>

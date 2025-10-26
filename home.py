@@ -79,6 +79,11 @@ def add_location():
 # ---------------------------------------------------------------
 
 
+@app.route("/map")
+def map_page():
+    with open("map.html", "r", encoding="utf-8") as f:
+        return render_template_string(f.read())
+
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
-#
