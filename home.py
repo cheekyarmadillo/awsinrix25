@@ -1,5 +1,5 @@
 from flask import Flask, render_template_string, request, jsonify
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from models import db, Location
 
 def load_html(path: str) -> str:
@@ -10,12 +10,19 @@ HOME_HTML = load_html("home.html")
 
 app = Flask(__name__, static_folder="static") #starts the app
 
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    "postgresql://maphole_user:securepasskey123@98.94.48.13:6543/maphole_db"
-)
+#app.config["SQLALCHEMY_DATABASE_URI"] = (
+#    "postgresql://maphole_user:securepasskey123@localhost:5432/maphole_db"
+#)
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://maphole_user:securepasskey123@localhost:5432/maphole_db"
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
+
+with app.app_context():
+    db.session.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+    db.create_all()  # creates 'locations' from your models.py if missing
+    db.session.commit()
 
 
 @app.route("/process", methods=["POST"])
@@ -77,6 +84,13 @@ def add_location():
     db.session.commit()
     return jsonify({"message": "Location added", "id": loc.id}), 201
 # ---------------------------------------------------------------
+@app.errorhandler(Exception)
+def _debug_errors(e):
+    import traceback
+    return jsonify({
+        "error": str(e),
+        "traceback": traceback.format_exc()
+    }), 500
 
 
 @app.route("/map")
