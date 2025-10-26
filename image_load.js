@@ -6,7 +6,3 @@ const loadImage = (path) => {
     return image;
 };
 
-const sendToFlask = (image) => {
-
-};
-
